@@ -6,11 +6,13 @@ const cors = require('cors');
 require('dotenv').config();
 
 const sequelize = require('./config/database');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
 app.use(cors());          // allows our React frontend to call this backend
 app.use(express.json());  // lets us read JSON data sent in requests
+app.use('/api/auth', authRoutes);
 
 // A simple test route, just to confirm the server works
 app.get('/', (req, res) => {
