@@ -1,16 +1,24 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { registerUser } from '../api/auth';
 
 function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('team_member');
+  const [error, setError] = useState('');
 
-  function handleSubmit(e) {
+  const navigate = useNavigate();
+
+  async function handleSubmit(e) {
     e.preventDefault();
-    console.log('Registering:', name, email, password, role);
-    // later: send this to the backend
+    try {
+      await registerUser(name, email, password, role);
+      navigate('/login'); // after registering, send them to log in
+    } catch (err) {
+      setError('Could not register. That email might already be taken.');
+    }
   }
 
   return (
@@ -20,6 +28,8 @@ function Register() {
         className="bg-white p-8 rounded-lg shadow-md w-80"
       >
         <h1 className="text-2xl font-bold mb-6 text-center">Register</h1>
+
+        {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
 
         <label className="block text-sm mb-1">Name</label>
         <input
@@ -64,7 +74,8 @@ function Register() {
         >
           Register
         </button>
-                <p className="text-sm text-center mt-4">
+
+        <p className="text-sm text-center mt-4">
           Already have an account? <Link to="/login" className="text-blue-600">Login</Link>
         </p>
       </form>
