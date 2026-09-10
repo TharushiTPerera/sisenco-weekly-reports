@@ -7,12 +7,17 @@ require('dotenv').config();
 
 const sequelize = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+const projectRoutes = require('./routes/projectRoutes');
 
 const app = express();
 
 app.use(cors());          // allows our React frontend to call this backend
 app.use(express.json());  // lets us read JSON data sent in requests
 app.use('/api/auth', authRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/projects', projectRoutes);
+
 
 // A simple test route, just to confirm the server works
 app.get('/', (req, res) => {
