@@ -7,6 +7,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ReportDetail from './pages/ReportDetail';
 import ReportHistory from './pages/ReportHistory';
 import ManagerDashboard from './pages/ManagerDashboard';
+import ProjectManagement from './pages/ProjectManagement';
+import UserManagement from './pages/UserManagement';
 
 function App() {
   return (
@@ -60,6 +62,22 @@ function App() {
           element={
             <ProtectedRoute>
               <ManagerDashboard />
+            </ProtectedRoute>
+          }
+        />
+                <Route
+          path="/manager/projects"
+          element={
+            <ProtectedRoute>
+              <ProjectManagement />
+            </ProtectedRoute>
+          }
+        />
+                <Route
+          path="/manager/users"
+          element={
+            <ProtectedRoute>
+              <UserManagement />
             </ProtectedRoute>
           }
         />

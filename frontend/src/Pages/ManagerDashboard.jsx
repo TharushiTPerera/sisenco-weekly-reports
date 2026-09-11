@@ -33,7 +33,17 @@ function ManagerDashboard() {
     <div className="min-h-screen bg-gray-100">
       <Navbar />
       <div className="max-w-4xl mx-auto p-8">
-        <h1 className="text-2xl font-bold mb-6">Team Dashboard</h1>
+                        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Team Dashboard</h1>
+          <div className="flex gap-2">
+            <Link to="/manager/projects" className="text-sm bg-gray-600 text-white px-3 py-2 rounded hover:bg-gray-700">
+              Manage Projects
+            </Link>
+            <Link to="/manager/users" className="text-sm bg-gray-600 text-white px-3 py-2 rounded hover:bg-gray-700">
+              Manage Users
+            </Link>
+          </div>
+        </div>
 
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
