@@ -46,3 +46,7 @@ export async function getAllReports(filters = {}) {
   const response = await axios.get(`${API_URL}/reports/all?${params}`, authHeader());
   return response.data;
 }
+export async function getDashboardStats() {
+  const response = await axios.get(`${API_URL}/reports/stats`, authHeader());
+  return response.data;
+}

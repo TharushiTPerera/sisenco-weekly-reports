@@ -272,5 +272,51 @@ async function reviewReport(req, res) {
     res.status(400).json({ error: error.message });
   }
 }
+async function getDashboardStats(req, res) {
+  try {
+    const totalSubmittedThisWeek = await Report.count({ where: { status: 'submitted' } });
+    const needsCorrectionCount = await Report.count({ where: { status: 'needs_correction' } });
+    const approvedCount = await Report.count({ where: { status: 'approved' } });
+    const draftCount = await Report.count({ where: { status: 'draft' } });
 
-module.exports = { createReport, submitReport, getMyReports, getReportById, updateReport, getAllReports, reviewReport };
+    const totalReports = totalSubmittedThisWeek + needsCorrectionCount + approvedCount + draftCount;
+    const compliance = totalReports > 0
+      ? Math.round(((totalSubmittedThisWeek + approvedCount) / totalReports) * 100)
+      : 0;
+
+    const openBlockersCount = await Blocker.count();
+
+    // Workload by project: count of reports per project
+    const reportsByProject = await Report.findAll({
+      attributes: ['project_id', [Report.sequelize.fn('COUNT', Report.sequelize.col('id')), 'count']],
+      group: ['project_id'],
+    });
+
+    // Hours by type, team-wide: sum of hours per task_type
+    const hoursByTypeTotals = await HoursByType.findAll({
+      attributes: ['task_type', [HoursByType.sequelize.fn('SUM', HoursByType.sequelize.col('hours')), 'total_hours']],
+      group: ['task_type'],
+    });
+
+    // Status by team member: count of reports per user, per status
+    const reportsByUser = await Report.findAll({
+      attributes: ['user_id', 'status', [Report.sequelize.fn('COUNT', Report.sequelize.col('id')), 'count']],
+      group: ['user_id', 'status'],
+    });
+
+    res.json({
+      summary: {
+        totalSubmitted: totalSubmittedThisWeek,
+        complianceRate: compliance,
+        needsCorrectionCount,
+        openBlockersCount,
+      },
+      workloadByProject: reportsByProject,
+      hoursByType: hoursByTypeTotals,
+      statusByUser: reportsByUser,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+module.exports = { createReport, submitReport, getMyReports, getReportById, updateReport, getAllReports, reviewReport, getDashboardStats };
