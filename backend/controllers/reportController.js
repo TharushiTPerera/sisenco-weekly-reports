@@ -1,6 +1,6 @@
 // This file handles creating, submitting, viewing, and reviewing weekly reports.
 
-const { Report, Task, Blocker, Achievement, NextWeekTask, HoursByType, ReportReview } = require('../models');
+const { Report, Task, Blocker, Achievement, NextWeekTask, HoursByType, ReportReview, User } = require('../models');
 
 async function createReport(req, res) {
   try {
@@ -299,9 +299,10 @@ async function getDashboardStats(req, res) {
     });
 
     // Status by team member: count of reports per user, per status
-    const reportsByUser = await Report.findAll({
-      attributes: ['user_id', 'status', [Report.sequelize.fn('COUNT', Report.sequelize.col('id')), 'count']],
-      group: ['user_id', 'status'],
+        const reportsByUser = await Report.findAll({
+      attributes: ['user_id', 'status', [Report.sequelize.fn('COUNT', Report.sequelize.col('Report.id')), 'count']],
+      include: [{ model: User, attributes: ['name'] }],
+      group: ['user_id', 'status', 'User.id'],
     });
 
     res.json({

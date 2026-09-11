@@ -13,6 +13,12 @@ function statusColor(status) {
 }
 
 const COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6'];
+const STATUS_COLORS = {
+  draft: '#9ca3af',
+  submitted: '#3b82f6',
+  needs_correction: '#ef4444',
+  approved: '#22c55e',
+};
 
 function ManagerDashboard() {
   const [reports, setReports] = useState([]);
@@ -37,7 +43,6 @@ function ManagerDashboard() {
       .catch(() => setError('Could not load reports'));
   }
 
-  // Reshape data slightly for the charts
   const workloadData = stats?.workloadByProject.map((w) => ({
     name: `Project ${w.project_id}`,
     reports: parseInt(w.count),
@@ -47,6 +52,18 @@ function ManagerDashboard() {
     name: h.task_type,
     value: parseFloat(h.total_hours),
   })) || [];
+
+  // Reshape statusByUser into one row per user, with a column per status
+  // e.g. { user: "User 1", draft: 2, submitted: 1, approved: 3 }
+    const statusByUserMap = {};
+  stats?.statusByUser.forEach((row) => {
+    const userName = row.User?.name || `User ${row.user_id}`;
+    if (!statusByUserMap[userName]) {
+      statusByUserMap[userName] = { user: userName, draft: 0, submitted: 0, needs_correction: 0, approved: 0 };
+    }
+    statusByUserMap[userName][row.status] = parseInt(row.count);
+  });
+  const statusByUserData = Object.values(statusByUserMap);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -66,7 +83,6 @@ function ManagerDashboard() {
 
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
-        {/* Summary cards */}
         {stats && (
           <div className="grid grid-cols-4 gap-4 mb-6">
             <div className="bg-white p-4 rounded-lg shadow text-center">
@@ -88,8 +104,7 @@ function ManagerDashboard() {
           </div>
         )}
 
-        {/* Charts */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="bg-white p-4 rounded-lg shadow">
             <h3 className="text-sm font-semibold mb-2">Workload by Project</h3>
             <ResponsiveContainer width="100%" height={200}>
@@ -116,6 +131,22 @@ function ManagerDashboard() {
               </PieChart>
             </ResponsiveContainer>
           </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-lg shadow mb-6">
+          <h3 className="text-sm font-semibold mb-2">Report Status by Team Member</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={statusByUserData}>
+              <XAxis dataKey="user" fontSize={12} />
+              <YAxis allowDecimals={false} fontSize={12} />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="draft" stackId="a" fill={STATUS_COLORS.draft} name="Draft" />
+              <Bar dataKey="submitted" stackId="a" fill={STATUS_COLORS.submitted} name="Submitted" />
+              <Bar dataKey="needs_correction" stackId="a" fill={STATUS_COLORS.needs_correction} name="Needs Correction" />
+              <Bar dataKey="approved" stackId="a" fill={STATUS_COLORS.approved} name="Approved" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
         <div className="mb-4">
