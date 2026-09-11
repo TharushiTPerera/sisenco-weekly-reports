@@ -4,6 +4,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ReportForm from './pages/ReportForm';
 import ProtectedRoute from './components/ProtectedRoute';
+import ReportDetail from './pages/ReportDetail';
 
 function App() {
   return (
@@ -25,6 +26,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ReportForm />
+            </ProtectedRoute>
+          }
+        />
+                <Route
+          path="/report/:id"
+          element={
+            <ProtectedRoute>
+              <ReportDetail />
             </ProtectedRoute>
           }
         />
