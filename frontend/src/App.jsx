@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import ReportForm from './pages/ReportForm';
 import ProtectedRoute from './components/ProtectedRoute';
 import ReportDetail from './pages/ReportDetail';
+import ReportHistory from './pages/ReportHistory';
+import ManagerDashboard from './pages/ManagerDashboard';
 
 function App() {
   return (
@@ -34,6 +36,30 @@ function App() {
           element={
             <ProtectedRoute>
               <ReportDetail />
+            </ProtectedRoute>
+          }
+        />
+                <Route
+          path="/my-reports"
+          element={
+            <ProtectedRoute>
+              <ReportHistory />
+            </ProtectedRoute>
+          }
+        />
+                <Route
+          path="/report/:id/edit"
+          element={
+            <ProtectedRoute>
+              <ReportForm />
+            </ProtectedRoute>
+          }
+        />
+                <Route
+          path="/manager/dashboard"
+          element={
+            <ProtectedRoute>
+              <ManagerDashboard />
             </ProtectedRoute>
           }
         />

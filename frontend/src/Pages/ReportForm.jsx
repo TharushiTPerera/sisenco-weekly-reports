@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { getProjects, createReport } from '../api/reports';
+import { getProjects, createReport, getReportById, updateReport } from '../api/reports';
 
 function ReportForm() {
   const navigate = useNavigate();
+  const { id } = useParams(); // if this exists, we're editing an existing report
 
   const [projects, setProjects] = useState([]);
   const [projectId, setProjectId] = useState('');
@@ -20,17 +21,26 @@ function ReportForm() {
   const [hoursByType, setHoursByType] = useState([]);
 
   useEffect(() => {
-    getProjects()
-      .then((data) => setProjects(data))
-      .catch(() => setError('Could not load projects'));
-  }, []);
+    getProjects().then(setProjects).catch(() => setError('Could not load projects'));
 
-  // ---- Tasks ----
+    // If editing, load the existing report and pre-fill everything
+    if (id) {
+      getReportById(id).then((report) => {
+        setProjectId(report.project_id);
+        setWeekStart(report.week_start);
+        setWeekEnd(report.week_end);
+        setNotes(report.notes || '');
+        setTasks(report.Tasks || []);
+        setBlockers(report.Blockers || []);
+        setAchievements(report.Achievements || []);
+        setNextWeekTasks((report.NextWeekTasks || []).map((n) => n.description));
+        setHoursByType(report.HoursByTypes || []);
+      }).catch(() => setError('Could not load report'));
+    }
+  }, [id]);
+
   function addTask() {
-    setTasks([...tasks, {
-      task_name: '', priority: 'medium', planned_percent: 0, actual_percent: 0,
-      status: 'not_started', time_planned_hours: 0, time_spent_hours: 0, output: '',
-    }]);
+    setTasks([...tasks, { task_name: '', priority: 'medium', planned_percent: 0, actual_percent: 0, status: 'not_started', time_planned_hours: 0, time_spent_hours: 0, output: '' }]);
   }
   function updateTask(index, field, value) {
     const updated = [...tasks];
@@ -41,7 +51,6 @@ function ReportForm() {
     setTasks(tasks.filter((_, i) => i !== index));
   }
 
-  // ---- Blockers ----
   function addBlocker() {
     setBlockers([...blockers, { description: '', is_key: false }]);
   }
@@ -54,7 +63,6 @@ function ReportForm() {
     setBlockers(blockers.filter((_, i) => i !== index));
   }
 
-  // ---- Achievements ----
   function addAchievement() {
     setAchievements([...achievements, { description: '', is_key: false }]);
   }
@@ -67,7 +75,6 @@ function ReportForm() {
     setAchievements(achievements.filter((_, i) => i !== index));
   }
 
-  // ---- Next Week Tasks (simple text list, no object needed) ----
   function addNextWeekTask() {
     setNextWeekTasks([...nextWeekTasks, '']);
   }
@@ -80,7 +87,6 @@ function ReportForm() {
     setNextWeekTasks(nextWeekTasks.filter((_, i) => i !== index));
   }
 
-  // ---- Hours by Type ----
   function addHoursByType() {
     setHoursByType([...hoursByType, { task_type: '', hours: 0 }]);
   }
@@ -93,21 +99,27 @@ function ReportForm() {
     setHoursByType(hoursByType.filter((_, i) => i !== index));
   }
 
-  async function handleSaveDraft(e) {
+  async function handleSave(e) {
     e.preventDefault();
+    const payload = {
+      project_id: projectId,
+      week_start: weekStart,
+      week_end: weekEnd,
+      notes,
+      tasks,
+      blockers,
+      achievements,
+      nextWeekTasks,
+      hoursByType,
+    };
     try {
-      await createReport({
-        project_id: projectId,
-        week_start: weekStart,
-        week_end: weekEnd,
-        notes,
-        tasks,
-        blockers,
-        achievements,
-        nextWeekTasks,
-        hoursByType,
-      });
-      navigate('/dashboard');
+      if (id) {
+        await updateReport(id, payload);
+        navigate(`/report/${id}`); // go back to the detail page after editing
+      } else {
+        await createReport(payload);
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError('Could not save report');
     }
@@ -117,11 +129,11 @@ function ReportForm() {
     <div className="min-h-screen bg-gray-100">
       <Navbar />
       <div className="max-w-4xl mx-auto p-8">
-        <h1 className="text-2xl font-bold mb-6">New Weekly Report</h1>
+        <h1 className="text-2xl font-bold mb-6">{id ? 'Edit Report' : 'New Weekly Report'}</h1>
 
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
-        <form onSubmit={handleSaveDraft} className="bg-white p-6 rounded-lg shadow space-y-6">
+        <form onSubmit={handleSave} className="bg-white p-6 rounded-lg shadow space-y-6">
           <div>
             <label className="block text-sm mb-1">Project</label>
             <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full border rounded px-3 py-2" required>
@@ -141,7 +153,6 @@ function ReportForm() {
             </div>
           </div>
 
-          {/* Tasks */}
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-semibold">Tasks Completed</label>
@@ -174,7 +185,6 @@ function ReportForm() {
             ))}
           </div>
 
-          {/* Blockers */}
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-semibold">Blockers / Challenges</label>
@@ -193,7 +203,6 @@ function ReportForm() {
             ))}
           </div>
 
-          {/* Achievements */}
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-semibold">Achievements / Highlights</label>
@@ -212,7 +221,6 @@ function ReportForm() {
             ))}
           </div>
 
-          {/* Next Week Tasks */}
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-semibold">Tasks Planned for Next Week</label>
@@ -227,7 +235,6 @@ function ReportForm() {
             ))}
           </div>
 
-          {/* Hours by Type */}
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-semibold">Hours by Task Type (optional)</label>
@@ -249,7 +256,7 @@ function ReportForm() {
           </div>
 
           <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Save as Draft
+            {id ? 'Save Changes' : 'Save as Draft'}
           </button>
         </form>
       </div>

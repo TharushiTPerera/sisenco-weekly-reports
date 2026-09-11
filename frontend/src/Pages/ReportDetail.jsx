@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { getReportById, submitReport } from '../api/reports';
+import { getReportById, submitReport, reviewReport } from '../api/reports';
 
-// Little helper to color-code the status badge
 function statusColor(status) {
   if (status === 'draft') return 'bg-gray-200 text-gray-700';
   if (status === 'submitted') return 'bg-blue-200 text-blue-700';
@@ -13,11 +12,11 @@ function statusColor(status) {
 }
 
 function ReportDetail() {
-  const { id } = useParams(); // reads the report ID from the URL, e.g. /report/3
-  const navigate = useNavigate();
+  const { id } = useParams();
 
   const [report, setReport] = useState(null);
   const [error, setError] = useState('');
+  const [comment, setComment] = useState('');
 
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -34,13 +33,36 @@ function ReportDetail() {
   async function handleSubmit() {
     try {
       await submitReport(id);
-      loadReport(); // refresh to show the new status
+      loadReport();
     } catch (err) {
       setError('Could not submit report');
     }
   }
 
-  if (error) {
+  async function handleApprove() {
+    try {
+      await reviewReport(id, 'approved', '');
+      loadReport();
+    } catch (err) {
+      setError('Could not approve report');
+    }
+  }
+
+  async function handleRequestChanges() {
+    if (!comment.trim()) {
+      setError('Please add a comment explaining what needs to change');
+      return;
+    }
+    try {
+      await reviewReport(id, 'requested_changes', comment);
+      setComment('');
+      loadReport();
+    } catch (err) {
+      setError('Could not submit review');
+    }
+  }
+
+  if (error && !report) {
     return (
       <div className="min-h-screen bg-gray-100">
         <Navbar />
@@ -59,13 +81,15 @@ function ReportDetail() {
   }
 
   const isOwner = report.user_id === user?.id;
+  const isManager = user?.role === 'manager';
   const canEditOrSubmit = isOwner && (report.status === 'draft' || report.status === 'needs_correction');
+  const canReview = isManager && report.status === 'submitted';
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar />
       <div className="max-w-4xl mx-auto p-8">
-        <Link to="/dashboard" className="text-blue-600 text-sm">&larr; Back</Link>
+        <Link to={isManager ? '/manager/dashboard' : '/my-reports'} className="text-blue-600 text-sm">&larr; Back</Link>
 
         <div className="flex justify-between items-center mt-2 mb-6">
           <h1 className="text-2xl font-bold">
@@ -75,6 +99,8 @@ function ReportDetail() {
             {report.status.replace('_', ' ')}
           </span>
         </div>
+
+        {error && <p className="text-red-500 mb-4">{error}</p>}
 
         {report.status === 'needs_correction' && report.latest_comment && (
           <div className="bg-red-50 border border-red-200 rounded p-4 mb-6">
@@ -142,12 +168,45 @@ function ReportDetail() {
 
         {canEditOrSubmit && (
           <div className="mt-6 flex gap-3">
+            <Link
+              to={`/report/${id}/edit`}
+              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+            >
+              Edit
+            </Link>
             <button
               onClick={handleSubmit}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
               Submit for Review
             </button>
+          </div>
+        )}
+
+        {canReview && (
+          <div className="mt-6 bg-white p-6 rounded-lg shadow">
+            <h2 className="font-semibold mb-3">Review this report</h2>
+            <textarea
+              placeholder="Comment (required if requesting changes)"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="w-full border rounded px-3 py-2 mb-3"
+              rows={3}
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleApprove}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                Approve
+              </button>
+              <button
+                onClick={handleRequestChanges}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Request Changes
+              </button>
+            </div>
           </div>
         )}
       </div>

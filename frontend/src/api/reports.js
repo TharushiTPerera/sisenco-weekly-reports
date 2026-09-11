@@ -28,3 +28,21 @@ export async function submitReport(id) {
   const response = await axios.patch(`${API_URL}/reports/${id}/submit`, {}, authHeader());
   return response.data;
 }
+
+export async function getMyReports() {
+  const response = await axios.get(`${API_URL}/reports/my-reports`, authHeader());
+  return response.data;
+}
+export async function updateReport(id, reportData) {
+  const response = await axios.put(`${API_URL}/reports/${id}`, reportData, authHeader());
+  return response.data;
+}
+export async function reviewReport(id, action, comment) {
+  const response = await axios.patch(`${API_URL}/reports/${id}/review`, { action, comment }, authHeader());
+  return response.data;
+}
+export async function getAllReports(filters = {}) {
+  const params = new URLSearchParams(filters).toString();
+  const response = await axios.get(`${API_URL}/reports/all?${params}`, authHeader());
+  return response.data;
+}
