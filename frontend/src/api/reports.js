@@ -50,3 +50,7 @@ export async function getDashboardStats() {
   const response = await axios.get(`${API_URL}/reports/stats`, authHeader());
   return response.data;
 }
+export async function askAssistant(question) {
+  const response = await axios.post(`${API_URL}/chat/ask`, { question }, authHeader());
+  return response.data;
+}

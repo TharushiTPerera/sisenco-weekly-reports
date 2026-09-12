@@ -5,6 +5,7 @@ import { getAllReports, getDashboardStats, getProjects } from '../api/reports';
 import { getAllUsers } from '../api/users';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { FileCheck2, TrendingUp, AlertCircle, ShieldAlert, Settings, Users } from 'lucide-react';
+import ChatAssistant from '../components/ChatAssistant';
 
 function statusColor(status) {
   if (status === 'draft') return 'bg-gray-100 text-gray-600';
@@ -241,6 +242,7 @@ function ManagerDashboard() {
           ))}
         </div>
       </div>
+       <ChatAssistant />
     </div>
   );
 }
