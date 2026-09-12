@@ -9,6 +9,7 @@ const sequelize = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const projectRoutes = require('./routes/projectRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 
@@ -17,7 +18,7 @@ app.use(express.json());  // lets us read JSON data sent in requests
 app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/projects', projectRoutes);
-
+app.use('/api/chat', chatRoutes);
 
 // A simple test route, just to confirm the server works
 app.get('/', (req, res) => {
